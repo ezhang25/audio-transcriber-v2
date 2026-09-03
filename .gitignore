@@ -23,4 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python virtual environment and generated files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
 src-tauri/target/

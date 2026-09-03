@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 id="caption">CAPTIONS WILL BE DISPLAYED HERE</h1>
+
+    <script>
+        const caption = document.getElementById("caption");
+        const socket = new WebSocket("ws://127.0.0.1:8765");
+
+        socket.addEventListener("open", () => {
+            console.log("Connected to Python caption server");
+        });
+
+        socket.addEventListener("message", (event) => {
+            caption.textContent = event.data;
+        });
+
+        socket.addEventListener("close", () => {
+            console.log("Disconnected from Python caption server");
+        });
+    </script>
+</body>
+</html>

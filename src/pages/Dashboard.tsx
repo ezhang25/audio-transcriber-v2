@@ -1,16 +1,41 @@
-import { Button, Text } from "@chakra-ui/react";
+import { Button, Text, Center, Box } from "@chakra-ui/react";
+import { invoke } from "@tauri-apps/api/core";
 
 function Dashboard() {
+  async function startTranscription() {
+    try {
+      await invoke('startTranscription');
+      console.log('Window successfully created!');
+    } catch (error) {
+      alert(`Failed to open caption window: ${String(error)}`);
+    }
+  }
+
+  async function endTranscription() {
+    try {
+      await invoke('endTranscription');
+      console.log('Window successfully closed!');
+    } catch (error) {
+      alert(`Failed to open caption window: ${String(error)}`);
+    }
+  }
+
   return (
     <main>
-      <h1>This will be a dashboard</h1>
+      <Box w="full" bg="green">
+        <Center w="full" padding="10px">
+          <Text fontSize="xl">Dashboard</Text>
+        </Center>
 
-      <Button variant="surface">
-        <Text>Start Transcription</Text>
-      </Button>
-      <Button variant="surface">
-        <Text>End Transcription</Text>
-      </Button>
+        <Center w="full" padding="10px" gap="5">
+          <Button variant="surface" onClick={startTranscription}>
+            <Text>Start Transcription</Text>
+          </Button>
+          <Button variant="surface" onClick={endTranscription}>
+            <Text>End Transcription</Text>
+          </Button>
+        </Center>
+      </Box>
     </main>
   );
 }

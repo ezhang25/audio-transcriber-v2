@@ -12,7 +12,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ChakraProvider value={defaultSystem}>
       <HashRouter>
-        <HStack height="100dvh" align="stretch" gap="0">
+        <HStack h="100dvh" w="100vw" align="stretch" gap="0">
           <MenuBar />
           <App />
         </HStack>

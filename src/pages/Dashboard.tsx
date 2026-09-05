@@ -20,6 +20,15 @@ function Dashboard() {
     }
   }
 
+  async function test() {
+    try {
+      await invoke('pyTest');
+      console.log('Hi from Rust!');
+    } catch (error) {
+      alert(`Message from Rust failed: ${String(error)}`);
+    }
+  }
+
   return (
     <main>
       <Box w="full" bg="green">
@@ -33,6 +42,9 @@ function Dashboard() {
           </Button>
           <Button variant="surface" onClick={endTranscription}>
             <Text>End Transcription</Text>
+          </Button>
+          <Button variant="surface" onClick={test}>
+            <Text>Test</Text>
           </Button>
         </Center>
       </Box>

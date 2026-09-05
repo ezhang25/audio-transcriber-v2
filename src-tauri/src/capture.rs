@@ -86,16 +86,16 @@ pub fn start_audio(filter: SCContentFilter) -> Result<SCStream, String>  {
         .with_captures_audio(true)
         .with_sample_rate(16000);
 
-        let mut stream = SCStream::new(&filter, &config);
+    let mut stream = SCStream::new(&filter, &config);
 
-        stream.add_output_handler(
-            move |sample: CMSampleBuffer, _output_type: SCStreamOutputType| {
-                let audio_buffer = sample.audio_buffer_list();
+    stream.add_output_handler(
+        move |sample: CMSampleBuffer, _output_type: SCStreamOutputType| {
+            let audio_buffer = sample.audio_buffer_list();
 
-                println!("Received audio buffer: {audio_buffer:?}");
-            },
-            SCStreamOutputType::Audio,
-        );
+            println!("Received audio buffer: {audio_buffer:?}");
+       },
+        SCStreamOutputType::Audio,
+    );
     
     stream
         .start_capture()

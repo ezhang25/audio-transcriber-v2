@@ -26,4 +26,4 @@ screencapturekit = { version = "9", features = ["async", "macos_14_0"] }
 core-graphics2 = "0.6.1"
 tokio-tungstenite = "0.30"
 futures-util = "0.3"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "time"] }

@@ -14,16 +14,17 @@ async def send_caption(message):
             disconnected.add(websocket)
     websocket_servers -= disconnected
 
-async def handle_websocket(websocket):
+async def handle_websocket(websocket, audio_queue):
     websocket_servers.add(websocket)
     print("Client connected")
 
     await websocket.send("Hello from Python")
 
-    try:
+    try:   
         async for message in websocket:
             if isinstance(message, bytes):
-                print(f"Python received {len(message)} audio bytes")
+                await audio_queue.put(message)
+                print(f"Queued {len(message)} PCM bytes")
             else:
                 print(f"Python received text: {message}")
 

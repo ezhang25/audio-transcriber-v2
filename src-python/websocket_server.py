@@ -21,7 +21,12 @@ async def handle_websocket(websocket):
     await websocket.send("Hello from Python")
 
     try:
-        await websocket.wait_closed()
+        async for message in websocket:
+            if isinstance(message, bytes):
+                print(f"Python received {len(message)} audio bytes")
+            else:
+                print(f"Python received text: {message}")
+
     finally:
         websocket_servers.remove(websocket)
         print("Client disconnected")

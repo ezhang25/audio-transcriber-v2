@@ -6,11 +6,6 @@ mod connection;
 
 #[tauri::command (rename = "startTranscription")]
 fn start_transcription(app: tauri::AppHandle, state: tauri::State<capture::CaptureState>) {
-    let start_server = std::process::Command::new("python3")
-        .arg("../src-python/main.py")
-        .spawn()
-        .expect("python server failed to start");
-
     if let Some(existing_window) = app.get_webview_window("caption") {
         let _ = existing_window.show();
         let _ = existing_window.set_focus();
@@ -44,19 +39,25 @@ fn end_transcription(app: tauri::AppHandle, state: tauri::State<capture::Capture
         Ok(()) => println!("End pressed: audio stream stopped."),
         Err(error) => eprintln!("Could not stop audio stream: {error}"),
     }
-}
 
-#[tauri::command (rename = "pyTest")]
-fn websocket() {
-    connection::connect_to_python();
+    capture::stop_python_server(state.inner());
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .manage(capture::CaptureState::default())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![start_transcription, end_transcription, websocket])
-        .run(tauri::generate_context!())
+        .invoke_handler(tauri::generate_handler![start_transcription, end_transcription])
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { .. } = event {
+            let state = app_handle.state::<capture::CaptureState>();
+
+            let _ = capture::end_audio(state.inner());
+            capture::stop_python_server(state.inner());
+        }
+    });
 }

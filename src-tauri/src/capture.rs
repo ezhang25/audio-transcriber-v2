@@ -1,20 +1,21 @@
 use screencapturekit::content_sharing_picker::*;
 use screencapturekit::prelude::*;
-use core_graphics2::window::{
-    preflight_screen_capture_access,
-    request_screen_capture_access,
-};
 use std::sync::{Arc, Mutex};
+use std::process::Child;
 use tauri::Manager;
+
+use crate::connection;
 
 pub struct CaptureState {
     pub stream: Arc<Mutex<Option<SCStream>>>,
+    pub python_server: Arc<Mutex<Option<Child>>>,
 }
 
 impl Default for CaptureState {
     fn default() -> Self {
         Self {
             stream: Arc::new(Mutex::new(None)),
+            python_server: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -29,11 +30,29 @@ pub fn select_audio(app: tauri::AppHandle, state: &CaptureState) {
     ]);
 
     let stream_slot = Arc::clone(&state.stream);
+    let server_slot = Arc::clone(&state.python_server);
     let app_handle = app.clone();
 
     SCContentSharingPicker::show(&config, move |outcome| match outcome {
         SCPickerOutcome::Picked(result) => {
             let filter = result.filter();
+
+            let mut active_server = server_slot
+                .lock()
+                .expect("Could not lock Python server state");
+
+            if let Some(mut old_server) = active_server.take() {
+                let _ = old_server.kill();
+                let _ = old_server.wait();
+            }
+
+            let python_server = std::process::Command::new("../.venv/bin/python")
+                .arg("../src-python/main.py")
+                .spawn()
+                .expect("Python server failed to start");
+
+            *active_server = Some(python_server);
+            println!("Python WebSocket server started.");
             
             let source_caption = match result.source() {
                 SCPickedSource::Window(title) => format!("Capturing window: {title}"),
@@ -84,16 +103,21 @@ pub fn select_audio(app: tauri::AppHandle, state: &CaptureState) {
 pub fn start_audio(filter: SCContentFilter) -> Result<SCStream, String>  {
     let config = SCStreamConfiguration::new()
         .with_captures_audio(true)
-        .with_sample_rate(16000);
+        .with_sample_rate(48_000)
+        .with_channel_count(2);
 
+    let audio_tx = connection::start_audio_socket();
     let mut stream = SCStream::new(&filter, &config);
 
     stream.add_output_handler(
         move |sample: CMSampleBuffer, _output_type: SCStreamOutputType| {
-            let audio_buffer = sample.audio_buffer_list();
-
-            println!("Received audio buffer: {audio_buffer:?}");
-       },
+            if let Some(audio_buffer_list) = sample.audio_buffer_list() {
+                for buffer in &audio_buffer_list {
+                    let pcm_bytes = buffer.data().to_vec();
+                    let _ = audio_tx.try_send(pcm_bytes);
+                }
+            }
+        },
         SCStreamOutputType::Audio,
     );
     
@@ -118,4 +142,17 @@ pub fn end_audio(state: &CaptureState) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub fn stop_python_server(state: &CaptureState) {
+    let mut server_slot = state
+        .python_server
+        .lock()
+        .expect("Could not lock Python server state");
+
+    if let Some(mut server) = server_slot.take() {
+        let _ = server.kill();
+        let _ = server.wait();
+        println!("Python WebSocket server stopped.");
+    }
 }

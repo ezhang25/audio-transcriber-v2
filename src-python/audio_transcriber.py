@@ -23,8 +23,15 @@ class AudioTranscriber:
             mono_16k,
             language="en",
             beam_size=1,
-            vad_filter=True,
+            vad_filter=False,
         )
+        print(
+            f"raw bytes={len(pcm_bytes)}, "
+            f"48k mono samples={len(mono_48k)}, "
+            f"16k mono samples={len(mono_16k)}, "
+            f"peak={np.max(np.abs(mono_48k)):.3f}"
+        )   
+
         sf.write("/tmp/debug_capture.wav", mono_48k, 48_000)
 
         return "".join(segment.text for segment in segments).strip()

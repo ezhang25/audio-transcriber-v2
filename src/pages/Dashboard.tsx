@@ -31,20 +31,17 @@ function Dashboard() {
 
   return (
     <main>
-      <Box w="full" bg="green">
-        <Center w="full" padding="10px">
-          <Text fontSize="xl">Dashboard</Text>
+      <Box w="full">
+        <Center w="full" padding="20px" bg="grey">
+          <Text fontSize="xl" fontWeight="bold" color="white">Dashboard</Text>
         </Center>
 
-        <Center w="full" padding="10px" gap="5">
+        <Center w="full" h="full" padding="50px" gap="20px">
           <Button variant="surface" onClick={startTranscription}>
             <Text>Start Transcription</Text>
           </Button>
           <Button variant="surface" onClick={endTranscription}>
             <Text>End Transcription</Text>
-          </Button>
-          <Button variant="surface" onClick={test}>
-            <Text>Test</Text>
           </Button>
         </Center>
       </Box>

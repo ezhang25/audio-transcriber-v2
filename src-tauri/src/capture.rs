@@ -72,7 +72,7 @@ pub fn select_audio(app: tauri::AppHandle, state: &CaptureState) {
             let capture_slot = Arc::clone(&stream_slot);
 
             std::thread::spawn(move || {
-                match start_audio(filter) {
+                match start_audio(app, filter) {
                     Ok(stream) => {
                         let mut active_stream = capture_slot
                             .lock()
@@ -100,13 +100,13 @@ pub fn select_audio(app: tauri::AppHandle, state: &CaptureState) {
     });
 }
 
-pub fn start_audio(filter: SCContentFilter) -> Result<SCStream, String>  {
+pub fn start_audio(app: tauri::AppHandle, filter: SCContentFilter) -> Result<SCStream, String>  {
     let config = SCStreamConfiguration::new()
         .with_captures_audio(true)
         .with_sample_rate(48_000)
         .with_channel_count(2);
 
-    let audio_tx = connection::start_audio_socket();
+    let audio_tx = connection::start_audio_socket(app);
     let mut stream = SCStream::new(&filter, &config);
 
     stream.add_output_handler(

@@ -18,8 +18,6 @@ async def handle_websocket(websocket, audio_queue):
     websocket_servers.add(websocket)
     print("Client connected")
 
-    await websocket.send("Hello from Python")
-
     try:   
         async for message in websocket:
             if isinstance(message, bytes):

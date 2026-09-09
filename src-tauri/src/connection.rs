@@ -7,8 +7,9 @@ use tokio_tungstenite::{
     tungstenite::protocol::Message,
 };
 use tokio::sync::mpsc;
+use tauri::Manager;
 
-pub fn start_audio_socket() -> mpsc::Sender<Vec<u8>> {
+pub fn start_audio_socket(app: tauri::AppHandle) -> mpsc::Sender<Vec<u8>> {
     let (audio_tx, mut audio_rx) = mpsc::channel::<Vec<u8>>(64);
 
     tauri::async_runtime::spawn(async move {
@@ -50,6 +51,15 @@ pub fn start_audio_socket() -> mpsc::Sender<Vec<u8>> {
                 match result {
                     Ok(Message::Text(text)) => {
                         println!("Rust received from Python: {text}");
+
+                        let caption_text = text.to_string();
+                        if let Some(caption_window) = app.get_webview_window("caption") {
+                            let text = serde_json::to_string(&caption_text).unwrap();
+
+                            let _ = caption_window.eval(&format!(
+                                "document.getElementById('caption').textContent = {text};"
+                            ));
+                        }
                     }
                     Ok(Message::Close(_)) => {
                         println!("Python closed the audio socket.");

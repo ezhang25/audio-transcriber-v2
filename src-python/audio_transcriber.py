@@ -1,14 +1,30 @@
-import faster_whisper
-import librosa
+import numpy as np
+from faster_whisper import WhisperModel
+from scipy.signal import resample_poly
+import soundfile as sf
+
 
 class AudioTranscriber:
     def __init__(self):
-        self.model = faster_whisper.WhisperModel("medium", device="cpu")
+        self.model = WhisperModel("medium.en", device="cpu", compute_type="int8")
 
-    def transcribe_audio(self, file_path):
-        chunk_16k = librosa.resample(file_path, orig_sr=48000, target_sr=16000)
-        segments, info = self.model.transcribe(chunk_16k, language="en")
-        text = ""
-        for segment in segments:
-            text += segment.text
-        return text
+    def transcribe_pcm(self, pcm_bytes: bytes) -> str:
+        samples = np.frombuffer(pcm_bytes, dtype="<f4")
+
+        usable_samples = samples.size - (samples.size % 2)
+        if usable_samples == 0:
+            return ""
+
+        stereo = samples[:usable_samples].reshape(-1, 2)
+        mono_48k = stereo.mean(axis=1, dtype=np.float32)
+        mono_16k = resample_poly(mono_48k, up=1, down=3).astype(np.float32)
+
+        segments, _info = self.model.transcribe(
+            mono_16k,
+            language="en",
+            beam_size=1,
+            vad_filter=True,
+        )
+        sf.write("/tmp/debug_capture.wav", mono_48k, 48_000)
+
+        return "".join(segment.text for segment in segments).strip()

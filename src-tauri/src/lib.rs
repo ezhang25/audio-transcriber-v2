@@ -53,11 +53,24 @@ pub fn run() {
         .expect("error while running tauri application");
 
     app.run(|app_handle, event| {
-        if let tauri::RunEvent::ExitRequested { .. } = event {
-            let state = app_handle.state::<capture::CaptureState>();
+        let state = app_handle.state::<capture::CaptureState>();
 
-            let _ = capture::end_audio(state.inner());
-            capture::stop_python_server(state.inner());
+        match event {
+            tauri::RunEvent::ExitRequested { .. } => {
+                let _ = capture::end_audio(state.inner());
+                capture::stop_python_server(state.inner());
+            }
+
+            tauri::RunEvent::WindowEvent {
+                label,
+                event: tauri::WindowEvent::CloseRequested { .. },
+                ..
+            } if label == "main" => {
+                let _ = capture::end_audio(state.inner());
+                capture::stop_python_server(state.inner());
+            }
+
+            _ => {}
         }
     });
 }

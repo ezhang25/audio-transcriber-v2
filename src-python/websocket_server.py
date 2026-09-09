@@ -24,7 +24,6 @@ async def handle_websocket(websocket, audio_queue):
         async for message in websocket:
             if isinstance(message, bytes):
                 await audio_queue.put(message)
-                print(f"Queued {len(message)} PCM bytes")
             else:
                 print(f"Python received text: {message}")
 

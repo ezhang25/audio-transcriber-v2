@@ -1,5 +1,6 @@
 use futures_util::{
     SinkExt, 
+    StreamExt
 };
 use tokio_tungstenite::{
     connect_async,
@@ -42,14 +43,38 @@ pub fn start_audio_socket() -> mpsc::Sender<Vec<u8>> {
             ))
             .await;
 
+        let (mut socket_writer, mut socket_reader) = socket.split();
+
+        tauri::async_runtime::spawn(async move {
+            while let Some(result) = socket_reader.next().await {
+                match result {
+                    Ok(Message::Text(text)) => {
+                        println!("Rust received from Python: {text}");
+                    }
+                    Ok(Message::Close(_)) => {
+                        println!("Python closed the audio socket.");
+                        break;
+                    }
+                    Ok(_) => {}
+                    Err(error) => {
+                        eprintln!("Could not read Python WebSocket message: {error}");
+                        break;
+                    }
+                }
+            }
+        });
+
         while let Some(pcm_bytes) = audio_rx.recv().await {
-            if let Err(error) = socket.send(Message::Binary(pcm_bytes.into())).await {
+            if let Err(error) = socket_writer
+                .send(Message::Binary(pcm_bytes.into()))
+                .await
+            {
                 eprintln!("Could not send PCM audio: {error}");
                 break;
             }
         }
 
-        let _ = socket.close(None).await;
+        let _ = socket_writer.close().await;
         println!("Rust audio socket closed.");
     });
 

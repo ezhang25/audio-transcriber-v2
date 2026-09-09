@@ -20,7 +20,7 @@ fn start_transcription(app: tauri::AppHandle, state: tauri::State<capture::Captu
         .always_on_top(true)
         .transparent(true)
         .decorations(false)
-        .inner_size(1000.0, 100.0)
+        .inner_size(1500.0, 100.0)
         .position(0.0, 800.0)
         .build()
         .expect("Could not create caption window");

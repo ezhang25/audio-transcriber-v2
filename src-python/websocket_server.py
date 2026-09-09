@@ -27,8 +27,11 @@ async def handle_websocket(websocket, audio_queue):
             else:
                 print(f"Python received text: {message}")
 
+    except websockets.exceptions.ConnectionClosed:
+        pass
+
     finally:
-        websocket_servers.remove(websocket)
+        websocket_servers.discard(websocket)
         print("Client disconnected")
 
 async def main():
